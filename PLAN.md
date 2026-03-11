@@ -6,6 +6,8 @@ Shukla Medical currently has an AI phone automation system (`shukla-phone-automa
 
 **Tech stack:** Flutter + Supabase (with repository pattern for future migration to self-hosted DB + Epicor ERP).
 
+**Design spec:** See `DESIGN.md` for the complete UI/UX design spec covering navigation, screen layouts, submission flow, and visual theming.
+
 ---
 
 ## Phase 1: Project Foundation
@@ -86,10 +88,10 @@ Mirror the existing Python models from `/home/arch/Projects/shukla-phone-automat
 **Goal:** Reps can submit reports with the same data the phone system collects.
 
 ### 3.1 Request type selector
-- Card-based picker for the 6 request types
+- Card-based picker for the 6 request types (2-column grid — see `DESIGN.md`)
 
 ### 3.2 Dynamic form per request type
-Match field requirements from `/home/arch/Projects/shukla-phone-automation/src/system_prompt.py` (lines 39-76):
+Wizard mode by default (one section at a time with progress indicator). Toggle to single-page form mode; preference remembered locally. Match field requirements from `/home/arch/Projects/shukla-phone-automation/src/system_prompt.py` (lines 39-76):
 
 | Request Type | Fields |
 |---|---|
@@ -107,7 +109,8 @@ All forms also include: priority toggle (normal/urgent)
 - Fuzzy matching (like the phone system does with similar names)
 
 ### 3.4 Submission flow
-- Form validation → confirmation screen (read-back, like phone system step 4) → submit
+- Request type picker → dynamic form → confirmation screen (read-back, like phone system step 4) → submit → success screen
+- Success screen offers "View Submission" or "Submit Another"
 - Audit log entry on submission creation
 
 ---
@@ -116,19 +119,30 @@ All forms also include: priority toggle (normal/urgent)
 
 **Goal:** Reps see their submissions; admins see everything.
 
-### 4.1 Submission list
+### 4.1 Navigation structure
+- Bottom tab navigation (see `DESIGN.md` for full spec)
+- Rep tabs: Home (feed + FAB), Submissions, Notifications, Settings
+- Admin tabs: Dashboard, Submissions, Notifications, Admin
+- FAB ("New Submission") visible on Home tab only
+
+### 4.2 Rep home screen
+- Feed of 10 most recent submissions with status badges
+- Pull-to-refresh + Supabase Realtime for live updates
+
+### 4.3 Submission list
 - Paginated list with filters: by status, request type, date range
 - Pull-to-refresh + Supabase Realtime for live updates
 - Submission card shows: request type, tray, facility, status badge, timestamp
 
-### 4.2 Submission detail
+### 4.4 Submission detail
 - Full submission data + status timeline (from `submission_status_history`)
 - Real-time status updates via Supabase stream
 
-### 4.3 Admin dashboard
+### 4.5 Admin dashboard
+- Status summary cards (Pending, In Progress, Completed counts) with time range toggle (Today/Week/Month)
 - View all submissions across all reps
 - Filter by rep, status, request type
-- Update submission status + add notes
+- Update submission status via bottom sheet (fixed status list + optional notes)
 
 ---
 
@@ -144,8 +158,18 @@ All forms also include: priority toggle (normal/urgent)
 - Firebase Cloud Messaging setup (iOS + Android)
 - Register FCM token on login → `push_tokens` table
 - Deep link from notification → submission detail screen
+- Reps: notified on status changes to their submissions
+- Admins: notified on new submissions
 
-### 5.3 In-app real-time
+### 5.3 In-app notification center
+- Bell icon with unread badge count in app bar
+- Notification list with blue dot for unread items
+- "Mark all as read" action
+- Tapping a notification opens submission detail
+- Rep format: "Your [Request Type] was marked [Status]"
+- Admin format: "[Rep Name] submitted a [Request Type]"
+
+### 5.4 In-app real-time
 - Supabase Realtime subscriptions on submissions table
 - Dashboard updates live without polling
 

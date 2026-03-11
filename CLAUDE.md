@@ -34,8 +34,19 @@ lib/
 
 ## Key Reference
 - Implementation plan: `PLAN.md`
+- UI/UX design spec: `DESIGN.md`
 - Phone automation source models: `../shukla-phone-automation/src/types.py`
 - Phone automation field requirements: `../shukla-phone-automation/src/system_prompt.py`
+
+## UI/UX Design Decisions
+- **Navigation:** Bottom tab bar — Rep: Home, Submissions, Notifications, Settings; Admin: Dashboard, Submissions, Notifications, Admin
+- **New Submission:** FAB on Home tab only → request type picker (2x3 grid) → wizard form (toggle to single-page) → confirmation → success
+- **Rep Home:** Feed of 10 most recent submissions + FAB
+- **Admin Home:** Dashboard with status counts + activity feed
+- **Notifications:** In-app notification center (bell icon with badge) + push notifications
+- **Status model:** Fixed list (pending, in progress, completed, cancelled) with admin notes
+- **Priority:** Toggle switch (normal/urgent)
+- **Theme:** Blue, black, white (Shukla brand colors — exact hex TBD)
 
 ## Conventions
 - HIPAA compliance is non-negotiable — no PHI in logs, encrypted storage, RLS on all tables
