@@ -50,7 +50,7 @@ final statusHistoryProvider = FutureProvider.family(
 /// Status counts for admin dashboard.
 final statusCountsProvider = FutureProvider.family(
   (ref, DateRange? range) {
-    final repo = ref.watch(submissionRepositoryProvider);
+    final repo = ref.read(submissionRepositoryProvider);
     return repo.getStatusCounts(fromDate: range?.from, toDate: range?.to);
   },
 );
@@ -74,6 +74,23 @@ class SubmissionFilters {
     this.limit = 20,
     this.offset = 0,
   });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SubmissionFilters &&
+          runtimeType == other.runtimeType &&
+          repId == other.repId &&
+          status == other.status &&
+          requestType == other.requestType &&
+          fromDate == other.fromDate &&
+          toDate == other.toDate &&
+          limit == other.limit &&
+          offset == other.offset;
+
+  @override
+  int get hashCode =>
+      Object.hash(repId, status, requestType, fromDate, toDate, limit, offset);
 }
 
 /// Date range helper for dashboard time toggles.
@@ -83,19 +100,33 @@ class DateRange {
 
   DateRange({required this.from, required this.to});
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DateRange &&
+          runtimeType == other.runtimeType &&
+          from == other.from &&
+          to == other.to;
+
+  @override
+  int get hashCode => Object.hash(from, to);
+
   factory DateRange.today() {
     final now = DateTime.now();
-    return DateRange(from: DateTime(now.year, now.month, now.day), to: now);
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    return DateRange(from: DateTime(now.year, now.month, now.day), to: endOfDay);
   }
 
   factory DateRange.thisWeek() {
     final now = DateTime.now();
     final start = now.subtract(Duration(days: now.weekday - 1));
-    return DateRange(from: DateTime(start.year, start.month, start.day), to: now);
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    return DateRange(from: DateTime(start.year, start.month, start.day), to: endOfDay);
   }
 
   factory DateRange.thisMonth() {
     final now = DateTime.now();
-    return DateRange(from: DateTime(now.year, now.month, 1), to: now);
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    return DateRange(from: DateTime(now.year, now.month, 1), to: endOfDay);
   }
 }
