@@ -108,6 +108,7 @@ class SupabaseSubmissionRepository implements SubmissionRepository {
         .from('submissions')
         .stream(primaryKey: ['id'])
         .eq('id', submissionId)
+        .where((rows) => rows.isNotEmpty)
         .map((rows) => Submission.fromJson(rows.first));
   }
 

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shukla_pps/config/theme.dart';
 
 enum SubmissionStatus {
-  pending(label: 'Pending', color: Colors.grey, jsonValue: 'pending'),
-  inProgress(label: 'In Progress', color: Colors.blue, jsonValue: 'in_progress'),
-  completed(label: 'Completed', color: Colors.green, jsonValue: 'completed'),
-  cancelled(label: 'Cancelled', color: Colors.red, jsonValue: 'cancelled');
+  pending(label: 'Pending', color: AppTheme.statusPending, jsonValue: 'pending'),
+  inProgress(label: 'In Progress', color: AppTheme.statusInProgress, jsonValue: 'in_progress'),
+  completed(label: 'Completed', color: AppTheme.statusCompleted, jsonValue: 'completed'),
+  cancelled(label: 'Cancelled', color: AppTheme.statusCancelled, jsonValue: 'cancelled');
 
   const SubmissionStatus({
     required this.label,

@@ -9,6 +9,11 @@ import 'package:shukla_pps/providers/session_providers.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  assert(
+    AppConfig.supabaseUrl.isNotEmpty && AppConfig.supabaseAnonKey.isNotEmpty,
+    'SUPABASE_URL and SUPABASE_ANON_KEY must be provided via --dart-define',
+  );
+
   await Supabase.initialize(
     url: AppConfig.supabaseUrl,
     anonKey: AppConfig.supabaseAnonKey,
@@ -33,6 +38,15 @@ class ShuklaPpsApp extends ConsumerWidget {
         theme: AppTheme.lightTheme,
         debugShowCheckedModeBanner: false,
         routerConfig: router,
+        builder: (context, child) {
+          // Constrain to mobile width for desktop testing
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 430),
+              child: child,
+            ),
+          );
+        },
       ),
     );
   }

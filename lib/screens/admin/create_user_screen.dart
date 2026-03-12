@@ -49,8 +49,8 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
         );
         context.pop();
       }
-    } catch (e) {
-      setState(() { _error = e.toString(); _isSubmitting = false; });
+    } catch (_) {
+      setState(() { _error = 'Failed to create user. Please try again.'; _isSubmitting = false; });
     }
   }
 

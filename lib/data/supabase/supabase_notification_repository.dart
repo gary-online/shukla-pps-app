@@ -7,7 +7,11 @@ class SupabaseNotificationRepository implements NotificationRepository {
 
   SupabaseNotificationRepository(this._client);
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId {
+    final user = _client.auth.currentUser;
+    if (user == null) throw StateError('No authenticated user');
+    return user.id;
+  }
 
   @override
   Future<List<NotificationItem>> list({int limit = 50, int offset = 0}) async {

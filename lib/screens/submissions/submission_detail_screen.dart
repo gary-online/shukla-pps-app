@@ -7,6 +7,8 @@ import 'package:shukla_pps/providers/submission_providers.dart';
 import 'package:shukla_pps/providers/auth_providers.dart';
 import 'package:shukla_pps/providers/repository_providers.dart';
 import 'package:shukla_pps/widgets/status_badge.dart';
+import 'package:shukla_pps/widgets/error_state.dart';
+import 'package:shukla_pps/widgets/section_header.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class SubmissionDetailScreen extends ConsumerWidget {
@@ -24,34 +26,70 @@ class SubmissionDetailScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Submission Detail')),
       body: subAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error: $err')),
+        error: (err, _) => ErrorState(
+          message: 'Could not load submission',
+          onRetry: () => ref.invalidate(submissionDetailProvider(submissionId)),
+        ),
         data: (submission) {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // Header
-              Row(
-                children: [
-                  Icon(submission.requestType.icon, color: AppTheme.primaryBlue, size: 28),
-                  const SizedBox(width: 8),
-                  Text(submission.requestType.label, style: Theme.of(context).textTheme.titleLarge),
-                  const Spacer(),
-                  StatusBadge(status: submission.status),
-                ],
-              ),
-              if (submission.source == 'phone')
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text('Submitted via phone', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+              // Header card
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(submission.requestType.icon, color: AppTheme.primaryBlue, size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              submission.requestType.label,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          StatusBadge(status: submission.status),
+                        ],
+                      ),
+                      if (submission.source == 'phone')
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8, left: 52),
+                          child: Row(
+                            children: [
+                              Icon(Icons.phone, size: 14, color: AppTheme.textSecondary),
+                              const SizedBox(width: 4),
+                              Text('Submitted via phone', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              const SizedBox(height: 16),
+              ),
+              const SizedBox(height: 12),
 
               // Fields card
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SectionHeader(title: 'Details'),
                       if (submission.repName != null)
                         _DetailRow(label: 'Rep', value: submission.repName!),
                       if (submission.surgeon != null)
@@ -69,14 +107,21 @@ class SubmissionDetailScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Status timeline
-              Text('Status Timeline', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
+              const SectionHeader(title: 'Status Timeline'),
               historyAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Text('Error loading history: $err'),
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (err, _) => Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text('Error loading history', style: TextStyle(color: AppTheme.textSecondary)),
+                  ),
+                ),
                 data: (history) {
                   if (history.isEmpty) {
                     return Card(
@@ -84,7 +129,14 @@ class SubmissionDetailScreen extends ConsumerWidget {
                         padding: const EdgeInsets.all(16),
                         child: Row(
                           children: [
-                            Icon(Icons.circle, size: 12, color: submission.status.color),
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: submission.status.color,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
                             const SizedBox(width: 12),
                             Text('Created as ${submission.status.label}'),
                           ],
@@ -92,42 +144,62 @@ class SubmissionDetailScreen extends ConsumerWidget {
                       ),
                     );
                   }
-                  return Column(
-                    children: history.map((entry) {
-                      final ts = DateTime.tryParse(entry.createdAt);
-                      return Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.circle, size: 12, color: entry.status.color),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(entry.status.label, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                    if (entry.changedByName != null)
-                                      Text('by ${entry.changedByName}', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
-                                    if (entry.note != null)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 4),
-                                        child: Text(entry.note!, style: const TextStyle(fontSize: 14)),
-                                      ),
-                                    if (ts != null)
-                                      Text(timeago.format(ts), style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                                  ],
-                                ),
+                  return Card(
+                    child: Column(
+                      children: history.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final item = entry.value;
+                        final ts = DateTime.tryParse(item.createdAt);
+                        final isLast = index == history.length - 1;
+                        return Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    margin: const EdgeInsets.only(top: 4),
+                                    decoration: BoxDecoration(
+                                      color: item.status.color,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(item.status.label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                                        if (item.changedByName != null)
+                                          Text('by ${item.changedByName}', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                                        if (item.note != null)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 4),
+                                            child: Text(item.note!, style: const TextStyle(fontSize: 14)),
+                                          ),
+                                        if (ts != null)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 2),
+                                            child: Text(timeago.format(ts), style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                            ),
+                            if (!isLast) const Divider(height: 1, indent: 36),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                   );
                 },
               ),
+              const SizedBox(height: 80), // space for bottom button
             ],
           );
         },
@@ -167,7 +239,7 @@ class SubmissionDetailScreen extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Update Status', style: Theme.of(ctx).textTheme.titleMedium),
+                  Text('Update Status', style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 16),
                   RadioGroup<SubmissionStatus>(
                     groupValue: selected,
@@ -226,8 +298,13 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 120, child: Text(label, style: TextStyle(color: AppTheme.textSecondary))),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 15))),
+          SizedBox(
+            width: 100,
+            child: Text(label, style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+          ),
+          Expanded(
+            child: Text(value, style: const TextStyle(fontSize: 14)),
+          ),
         ],
       ),
     );

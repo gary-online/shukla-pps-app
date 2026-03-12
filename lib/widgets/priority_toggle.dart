@@ -24,11 +24,14 @@ class PriorityToggle extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Switch(
-          value: isUrgent,
-          activeTrackColor: AppTheme.urgentRed,
-          activeThumbColor: Colors.white,
-          onChanged: (val) => onChanged(val ? Priority.urgent : Priority.normal),
+        Semantics(
+          label: 'Priority: ${isUrgent ? 'Urgent' : 'Normal'}',
+          child: Switch(
+            value: isUrgent,
+            activeTrackColor: AppTheme.urgentRed,
+            activeThumbColor: Colors.white,
+            onChanged: (val) => onChanged(val ? Priority.urgent : Priority.normal),
+          ),
         ),
       ],
     );

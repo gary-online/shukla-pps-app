@@ -40,11 +40,11 @@ class _TrayTypePickerState extends State<TrayTypePicker> {
   }
 
   bool _fuzzyMatch(String source, String query) {
-    int si = 0;
-    for (int qi = 0; qi < query.length && si < source.length; si++) {
+    int qi = 0;
+    for (int si = 0; si < source.length && qi < query.length; si++) {
       if (source[si] == query[qi]) qi++;
     }
-    return si <= source.length;
+    return qi == query.length;
   }
 
   @override

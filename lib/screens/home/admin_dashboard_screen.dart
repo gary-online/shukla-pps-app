@@ -5,6 +5,9 @@ import 'package:shukla_pps/config/theme.dart';
 import 'package:shukla_pps/models/submission_status.dart';
 import 'package:shukla_pps/providers/submission_providers.dart';
 import 'package:shukla_pps/widgets/submission_card.dart';
+import 'package:shukla_pps/widgets/skeleton_card.dart';
+import 'package:shukla_pps/widgets/error_state.dart';
+import 'package:shukla_pps/widgets/section_header.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -14,15 +17,19 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
-  int _selectedRange = 0; // 0=Today, 1=This Week, 2=This Month
+  int _selectedRange = 1; // 0=Today, 1=This Week, 2=This Month
+  late DateRange? _dateRange = DateRange.thisWeek();
 
-  DateRange? get _dateRange {
-    return switch (_selectedRange) {
-      0 => DateRange.today(),
-      1 => DateRange.thisWeek(),
-      2 => DateRange.thisMonth(),
-      _ => null,
-    };
+  void _setRange(int index) {
+    setState(() {
+      _selectedRange = index;
+      _dateRange = switch (index) {
+        0 => DateRange.today(),
+        1 => DateRange.thisWeek(),
+        2 => DateRange.thisMonth(),
+        _ => null,
+      };
+    });
   }
 
   @override
@@ -32,7 +39,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(statusCountsProvider(_dateRange));
+        _setRange(_selectedRange);
         ref.invalidate(recentSubmissionsProvider);
       },
       child: ListView(
@@ -46,39 +53,91 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               ButtonSegment(value: 2, label: Text('This Month')),
             ],
             selected: {_selectedRange},
-            onSelectionChanged: (val) => setState(() => _selectedRange = val.first),
+            onSelectionChanged: (val) => _setRange(val.first),
+            style: SegmentedButton.styleFrom(
+              textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
           ),
           const SizedBox(height: 16),
 
           // Status count cards
           countsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Text('Error: $err'),
+            loading: () => const SizedBox(
+              height: 120,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (err, _) => ErrorState(
+              message: 'Could not load counts',
+              onRetry: () => _setRange(_selectedRange),
+            ),
             data: (counts) {
-              return Row(
+              return Column(
                 children: [
-                  _CountCard(label: 'Pending', count: counts[SubmissionStatus.pending] ?? 0, color: AppTheme.statusPending),
-                  const SizedBox(width: 8),
-                  _CountCard(label: 'In Progress', count: counts[SubmissionStatus.inProgress] ?? 0, color: AppTheme.statusInProgress),
-                  const SizedBox(width: 8),
-                  _CountCard(label: 'Completed', count: counts[SubmissionStatus.completed] ?? 0, color: AppTheme.statusCompleted),
+                  Row(
+                    children: [
+                      _CountCard(
+                        label: 'Pending',
+                        count: counts[SubmissionStatus.pending] ?? 0,
+                        color: AppTheme.statusPending,
+                        icon: Icons.schedule,
+                      ),
+                      const SizedBox(width: 10),
+                      _CountCard(
+                        label: 'Active',
+                        count: counts[SubmissionStatus.inProgress] ?? 0,
+                        color: AppTheme.statusInProgress,
+                        icon: Icons.trending_up,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      _CountCard(
+                        label: 'Completed',
+                        count: counts[SubmissionStatus.completed] ?? 0,
+                        color: AppTheme.statusCompleted,
+                        icon: Icons.check_circle_outline,
+                      ),
+                      const SizedBox(width: 10),
+                      _CountCard(
+                        label: 'Cancelled',
+                        count: counts[SubmissionStatus.cancelled] ?? 0,
+                        color: AppTheme.statusCancelled,
+                        icon: Icons.cancel_outlined,
+                      ),
+                    ],
+                  ),
                 ],
               );
             },
           ),
           const SizedBox(height: 24),
 
-          // Recent activity
-          Text('Recent Activity', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
+          // Recent activity header
+          const SectionHeader(title: 'Recent Activity'),
+
           recentAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Text('Error: $err'),
+            loading: () => Column(
+              children: List.generate(3, (_) => const SkeletonCard()),
+            ),
+            error: (err, _) => ErrorState(
+              message: 'Could not load activity',
+              onRetry: () => ref.invalidate(recentSubmissionsProvider),
+            ),
             data: (submissions) {
               if (submissions.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Text('No recent submissions', textAlign: TextAlign.center),
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      children: [
+                        Icon(Icons.inbox_outlined, size: 40, color: AppTheme.textSecondary),
+                        const SizedBox(height: 8),
+                        Text('No recent submissions', style: TextStyle(color: AppTheme.textSecondary)),
+                      ],
+                    ),
+                  ),
                 );
               }
               return Column(
@@ -97,23 +156,40 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 }
 
 class _CountCard extends StatelessWidget {
-  const _CountCard({required this.label, required this.count, required this.color});
+  const _CountCard({required this.label, required this.count, required this.color, required this.icon});
 
   final String label;
   final int count;
   final Color color;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+          child: Row(
             children: [
-              Text('$count', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
-              const SizedBox(height: 4),
-              Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('$count', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+                    Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

@@ -5,6 +5,8 @@ import 'package:shukla_pps/config/theme.dart';
 import 'package:shukla_pps/providers/notification_providers.dart';
 import 'package:shukla_pps/providers/repository_providers.dart';
 import 'package:shukla_pps/widgets/empty_state.dart';
+import 'package:shukla_pps/widgets/error_state.dart';
+import 'package:shukla_pps/widgets/skeleton_card.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class NotificationCenterScreen extends ConsumerWidget {
@@ -16,7 +18,6 @@ class NotificationCenterScreen extends ConsumerWidget {
 
     return Column(
       children: [
-        // Mark all as read action
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
@@ -26,7 +27,6 @@ class NotificationCenterScreen extends ConsumerWidget {
                 onPressed: () async {
                   await ref.read(notificationRepositoryProvider).markAllRead();
                   ref.invalidate(notificationsProvider);
-                  ref.invalidate(unreadNotificationCountProvider);
                 },
                 child: const Text('Mark all as read'),
               ),
@@ -36,8 +36,11 @@ class NotificationCenterScreen extends ConsumerWidget {
 
         Expanded(
           child: notificationsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Center(child: Text('Error: $err')),
+            loading: () => const SkeletonList(),
+            error: (err, _) => ErrorState(
+              message: 'Could not load notifications',
+              onRetry: () => ref.invalidate(notificationsProvider),
+            ),
             data: (notifications) {
               if (notifications.isEmpty) {
                 return const EmptyState(
@@ -46,36 +49,81 @@ class NotificationCenterScreen extends ConsumerWidget {
                 );
               }
 
-              return ListView.builder(
-                itemCount: notifications.length,
-                itemBuilder: (context, index) {
-                  final n = notifications[index];
-                  final ts = DateTime.tryParse(n.createdAt);
-
-                  return ListTile(
-                    leading: n.isRead
-                        ? const Icon(Icons.notifications_none, color: Colors.grey)
-                        : Icon(Icons.circle, size: 10, color: AppTheme.primaryBlue),
-                    title: Text(n.title, style: TextStyle(fontWeight: n.isRead ? FontWeight.normal : FontWeight.w600)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(n.body),
-                        if (ts != null) Text(timeago.format(ts), style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                      ],
-                    ),
-                    onTap: () async {
-                      if (!n.isRead) {
-                        await ref.read(notificationRepositoryProvider).markRead(n.id);
-                        ref.invalidate(notificationsProvider);
-                        ref.invalidate(unreadNotificationCountProvider);
-                      }
-                      if (context.mounted) {
-                        context.push('/submissions/${n.submissionId}');
-                      }
-                    },
-                  );
+              return RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(notificationsProvider);
                 },
+                child: ListView.builder(
+                  itemCount: notifications.length,
+                  itemBuilder: (context, index) {
+                    final n = notifications[index];
+                    final ts = DateTime.tryParse(n.createdAt);
+
+                    return Container(
+                      color: n.isRead ? null : AppTheme.primaryBlue.withValues(alpha: 0.04),
+                      child: ListTile(
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.notifications_outlined,
+                            color: n.isRead ? AppTheme.textSecondary : AppTheme.primaryBlue,
+                            size: 20,
+                          ),
+                        ),
+                        title: Row(
+                          children: [
+                            if (!n.isRead)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: AppTheme.primaryBlue,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                            Expanded(
+                              child: Text(
+                                n.title,
+                                style: TextStyle(fontWeight: n.isRead ? FontWeight.normal : FontWeight.w600, fontSize: 14),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 2),
+                            Text(n.body, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
+                            if (ts != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(timeago.format(ts), style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                              ),
+                          ],
+                        ),
+                        onTap: () async {
+                          if (!n.isRead) {
+                            await ref.read(notificationRepositoryProvider).markRead(n.id);
+                            ref.invalidate(notificationsProvider);
+                          }
+                          if (context.mounted) {
+                            context.push('/submissions/${n.submissionId}');
+                          }
+                        },
+                      ),
+                    );
+                  },
+                ),
               );
             },
           ),

@@ -52,8 +52,26 @@ class _LockScreenState extends ConsumerState<LockScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.lock, size: 64, color: AppTheme.primaryBlue),
-                const SizedBox(height: 16),
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(Icons.medical_services, size: 36, color: AppTheme.white),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Shukla PPS',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Icon(Icons.lock_outlined, size: 32, color: AppTheme.textSecondary),
+                const SizedBox(height: 8),
                 Text(
                   'Session Locked',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(

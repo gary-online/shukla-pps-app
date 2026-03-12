@@ -21,13 +21,33 @@ import 'package:shukla_pps/screens/admin/user_management_screen.dart';
 import 'package:shukla_pps/screens/admin/create_user_screen.dart';
 import 'package:shukla_pps/widgets/app_shell.dart';
 
+/// A [ChangeNotifier] that listens to Riverpod providers and notifies GoRouter
+/// when auth/lock state changes, without recreating the entire router.
+class _RouterRefreshNotifier extends ChangeNotifier {
+  _RouterRefreshNotifier(Ref ref) {
+    _sub1 = ref.listen(isAuthenticatedProvider, (_, __) => notifyListeners());
+    _sub2 = ref.listen(isLockedProvider, (_, __) => notifyListeners());
+  }
+
+  late final ProviderSubscription<bool> _sub1;
+  late final ProviderSubscription<bool> _sub2;
+
+  void dispose_() {
+    _sub1.close();
+    _sub2.close();
+  }
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
-  final isAuthenticated = ref.watch(isAuthenticatedProvider);
-  final isLocked = ref.watch(isLockedProvider);
+  final refreshNotifier = _RouterRefreshNotifier(ref);
+  ref.onDispose(() => refreshNotifier.dispose_());
 
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
+      final isAuthenticated = ref.read(isAuthenticatedProvider);
+      final isLocked = ref.read(isLockedProvider);
       final loggingIn = state.matchedLocation == '/login';
 
       if (!isAuthenticated) {
@@ -137,7 +157,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Settings (accessible via app bar gear icon for admins)
       GoRoute(
         path: '/settings',
-        builder: (context, state) => const SettingsScreen(),
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(title: const Text('Settings')),
+          body: const SettingsScreen(),
+        ),
         routes: [
           GoRoute(
             path: 'change-password',

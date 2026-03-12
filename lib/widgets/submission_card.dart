@@ -15,44 +15,63 @@ class SubmissionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final createdAt = DateTime.tryParse(submission.createdAt);
     final timeAgo = createdAt != null ? timeago.format(createdAt) : '';
+    final subtitle = [submission.trayType, submission.facility].whereType<String>().join(' \u2022 ');
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Icon(submission.requestType.icon, color: AppTheme.primaryBlue, size: 32),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      submission.requestType.label,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                    ),
-                    const SizedBox(height: 4),
-                    if (showRepName && submission.repName != null)
-                      Text(submission.repName!, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
-                    Text(
-                      [submission.trayType, submission.facility].whereType<String>().join(' • '),
-                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(timeAgo, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                  ],
+    return Semantics(
+      label: '${submission.requestType.label} submission, status ${submission.status.label}${showRepName && submission.repName != null ? ', by ${submission.repName}' : ''}, $timeAgo',
+      button: onTap != null,
+      child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Card(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(submission.requestType.icon, color: AppTheme.primaryBlue, size: 22),
                 ),
-              ),
-              StatusBadge(status: submission.status),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        submission.requestType.label,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      if (showRepName && submission.repName != null)
+                        Text(submission.repName!, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                      if (subtitle.isNotEmpty)
+                        Text(
+                          subtitle,
+                          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      const SizedBox(height: 4),
+                      Text(timeAgo, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                StatusBadge(status: submission.status),
+              ],
+            ),
           ),
         ),
+      ),
       ),
     );
   }

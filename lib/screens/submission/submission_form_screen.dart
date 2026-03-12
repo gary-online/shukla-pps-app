@@ -89,13 +89,18 @@ class _SubmissionFormScreenState extends ConsumerState<SubmissionFormScreen> {
           onSelected: (val) => _selectedTrayType = val,
         );
       case 'surgery_date':
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(_selectedDate != null
-              ? '${fieldLabels[field]}: ${_selectedDate!.toIso8601String().split('T').first}'
-              : fieldLabels[field] ?? 'Date'),
-          subtitle: hint != null ? Text(hint) : null,
-          trailing: const Icon(Icons.calendar_today),
+        return TextFormField(
+          readOnly: true,
+          decoration: InputDecoration(
+            labelText: fieldLabels[field],
+            hintText: hint ?? 'Select a date',
+            suffixIcon: const Icon(Icons.calendar_today),
+          ),
+          controller: TextEditingController(
+            text: _selectedDate != null
+                ? _selectedDate!.toIso8601String().split('T').first
+                : '',
+          ),
           onTap: () async {
             final picked = await showDatePicker(
               context: context,
@@ -105,6 +110,7 @@ class _SubmissionFormScreenState extends ConsumerState<SubmissionFormScreen> {
             );
             if (picked != null) setState(() => _selectedDate = picked);
           },
+          validator: (v) => v == null || v.isEmpty ? '${fieldLabels[field]} is required' : null,
         );
       case 'details':
         return TextFormField(
@@ -169,13 +175,24 @@ class _SubmissionFormScreenState extends ConsumerState<SubmissionFormScreen> {
     return Column(
       children: [
         // Progress indicator
-        LinearProgressIndicator(
-          value: (_currentStep + 1) / (_fields.length + 1), // +1 for priority
-        ),
         Padding(
-          padding: const EdgeInsets.all(8),
-          child: Text('Step ${_currentStep + 1} of ${_fields.length + 1}',
-              style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: LinearProgressIndicator(
+                  value: (_currentStep + 1) / (_fields.length + 1),
+                  minHeight: 4,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Step ${_currentStep + 1} of ${_fields.length + 1}: ${_currentStep < _fields.length ? (fieldLabels[_fields[_currentStep]] ?? _fields[_currentStep]) : 'Priority'}',
+                style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
         ),
         Expanded(
           child: Padding(
@@ -201,7 +218,9 @@ class _SubmissionFormScreenState extends ConsumerState<SubmissionFormScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     if (_currentStep < _fields.length) {
-                      setState(() => _currentStep++);
+                      if (_formKey.currentState!.validate()) {
+                        setState(() => _currentStep++);
+                      }
                     } else {
                       _goToConfirmation();
                     }

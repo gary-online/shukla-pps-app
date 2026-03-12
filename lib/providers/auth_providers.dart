@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shukla_pps/data/repositories/auth_repository.dart';
 import 'package:shukla_pps/models/user_profile.dart';
 import 'package:shukla_pps/providers/repository_providers.dart';
+import 'package:shukla_pps/providers/session_providers.dart';
 
 /// The current authenticated user profile. Null if not signed in.
 final currentUserProvider = AsyncNotifierProvider<CurrentUserNotifier, UserProfile?>(
@@ -17,18 +18,30 @@ class CurrentUserNotifier extends AsyncNotifier<UserProfile?> {
     // Listen to auth state changes
     final sub = authRepo.onAuthStateChange().listen((event) {
       if (event == AuthState.signedOut) {
+        ref.read(sessionServiceProvider).stop();
         state = const AsyncData(null);
+      } else if (event == AuthState.signedIn) {
+        ref.read(sessionServiceProvider).startTimer();
       }
     });
     ref.onDispose(() => sub.cancel());
 
-    return authRepo.getCurrentUser();
+    try {
+      return await authRepo.getCurrentUser();
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> signIn({required String email, required String password}) async {
     final authRepo = ref.read(authRepositoryProvider);
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => authRepo.signIn(email: email, password: password));
+    state = await AsyncValue.guard(
+      () => authRepo.signIn(email: email, password: password),
+    );
+    if (state.hasValue && state.value != null) {
+      ref.read(sessionServiceProvider).startTimer();
+    }
   }
 
   Future<void> signOut() async {
