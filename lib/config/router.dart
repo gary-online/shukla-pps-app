@@ -12,6 +12,13 @@ import 'package:shukla_pps/screens/submission/request_type_picker_screen.dart';
 import 'package:shukla_pps/screens/submission/submission_form_screen.dart';
 import 'package:shukla_pps/screens/submission/confirmation_screen.dart';
 import 'package:shukla_pps/screens/submission/success_screen.dart';
+import 'package:shukla_pps/screens/submissions/submission_list_screen.dart';
+import 'package:shukla_pps/screens/submissions/submission_detail_screen.dart';
+import 'package:shukla_pps/screens/notifications/notification_center_screen.dart';
+import 'package:shukla_pps/screens/settings/settings_screen.dart';
+import 'package:shukla_pps/screens/settings/change_password_screen.dart';
+import 'package:shukla_pps/screens/admin/user_management_screen.dart';
+import 'package:shukla_pps/screens/admin/create_user_screen.dart';
 import 'package:shukla_pps/widgets/app_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -67,12 +74,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/submissions',
-                builder: (context, state) => const _PlaceholderScreen(title: 'Submissions — Coming in Plan 5'),
+                builder: (context, state) => const SubmissionListScreen(),
                 routes: [
                   GoRoute(
                     path: ':id',
-                    builder: (context, state) => _PlaceholderScreen(
-                      title: 'Submission Detail: ${state.pathParameters['id']?.substring(0, 8) ?? ""}',
+                    builder: (context, state) => SubmissionDetailScreen(
+                      submissionId: state.pathParameters['id']!,
                     ),
                   ),
                 ],
@@ -84,7 +91,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/notifications',
-                builder: (context, state) => const _PlaceholderScreen(title: 'Notifications — Coming in Plan 5'),
+                builder: (context, state) => const NotificationCenterScreen(),
               ),
             ],
           ),
@@ -130,7 +137,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Settings (accessible via app bar gear icon for admins)
       GoRoute(
         path: '/settings',
-        builder: (context, state) => const _PlaceholderScreen(title: 'Settings — Coming in Plan 5'),
+        builder: (context, state) => const SettingsScreen(),
+        routes: [
+          GoRoute(
+            path: 'change-password',
+            builder: (context, state) => const ChangePasswordScreen(),
+          ),
+        ],
+      ),
+
+      // Admin create user
+      GoRoute(
+        path: '/admin/create-user',
+        builder: (context, state) => const CreateUserScreen(),
       ),
     ],
   );
@@ -154,19 +173,6 @@ class _SettingsOrAdminRouter extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdmin = ref.watch(isAdminProvider);
-    return isAdmin
-        ? const _PlaceholderScreen(title: 'Admin Panel — Coming in Plan 5')
-        : const _PlaceholderScreen(title: 'Settings — Coming in Plan 5');
-  }
-}
-
-/// Temporary placeholder for screens built in Plan 5.
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.title});
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text(title, style: const TextStyle(fontSize: 16)));
+    return isAdmin ? const UserManagementScreen() : const SettingsScreen();
   }
 }
