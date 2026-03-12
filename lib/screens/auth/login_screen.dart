@@ -54,39 +54,57 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isLoading = authState.isLoading;
 
     return Scaffold(
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 28),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Logo placeholder — replace with actual Shukla logo asset
-                  const Icon(
-                    Icons.medical_services,
-                    size: 80,
-                    color: AppTheme.primaryBlue,
+                  // Logo
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Icon(
+                      Icons.medical_services,
+                      size: 36,
+                      color: AppTheme.white,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   Text(
                     'Shukla PPS',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppTheme.black,
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Product & Procedure Support',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
 
                   // Email field
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     autocorrect: false,
+                    textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
                       labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
+                      prefixIcon: Icon(Icons.email_outlined, size: 20),
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
@@ -98,24 +116,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   // Password field
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _handleLogin(),
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outlined),
+                      prefixIcon: const Icon(Icons.lock_outlined, size: 20),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          size: 20,
+                        ),
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
-                      helperText: 'Minimum ${AppConfig.minPasswordLength} characters',
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Password is required';
+                      }
+                      if (value.length < AppConfig.minPasswordLength) {
+                        return 'Minimum ${AppConfig.minPasswordLength} characters';
                       }
                       return null;
                     },
@@ -124,15 +149,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Error message
                   if (_errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(color: AppTheme.urgentRed, fontSize: 14),
-                        textAlign: TextAlign.center,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.urgentRed.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: AppTheme.urgentRed, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: TextStyle(color: AppTheme.urgentRed, fontSize: 13),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   // Login button
                   SizedBox(

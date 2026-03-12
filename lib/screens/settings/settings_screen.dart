@@ -16,53 +16,96 @@ class SettingsScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Profile info
+        // Profile card
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text('Profile', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 12),
-                _InfoRow(label: 'Name', value: user?.fullName ?? ''),
-                _InfoRow(label: 'Email', value: user?.email ?? ''),
-                _InfoRow(label: 'Role', value: (user?.role ?? '').toUpperCase()),
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                  child: Text(
+                    (user?.fullName ?? '?')[0].toUpperCase(),
+                    style: TextStyle(color: AppTheme.primaryBlue, fontSize: 20, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(user?.fullName ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                      const SizedBox(height: 2),
+                      Text(user?.email ?? '', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                      const SizedBox(height: 2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          (user?.role ?? '').toUpperCase(),
+                          style: TextStyle(color: AppTheme.primaryBlue, fontSize: 11, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
         // Preferences
         Card(
+          child: SwitchListTile(
+            title: const Text('Wizard form mode'),
+            subtitle: const Text('Step-by-step submission form'),
+            value: isWizard,
+            onChanged: (val) => ref.read(formModeProvider.notifier).state = val,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Actions
+        Card(
           child: Column(
             children: [
-              SwitchListTile(
-                title: const Text('Wizard form mode'),
-                subtitle: const Text('Step-by-step submission form'),
-                value: isWizard,
-                onChanged: (val) => ref.read(formModeProvider.notifier).state = val,
+              ListTile(
+                leading: const Icon(Icons.lock_outline, size: 22),
+                title: const Text('Change Password'),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () => context.push('/settings/change-password'),
+              ),
+              const Divider(height: 1, indent: 52),
+              ListTile(
+                leading: Icon(Icons.logout, color: AppTheme.urgentRed, size: 22),
+                title: Text('Log Out', style: TextStyle(color: AppTheme.urgentRed)),
+                onTap: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Log Out'),
+                      content: const Text('Are you sure you want to log out?'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: Text('Log Out', style: TextStyle(color: AppTheme.urgentRed)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) {
+                    await ref.read(currentUserProvider.notifier).signOut();
+                  }
+                },
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 16),
-
-        // Actions
-        ListTile(
-          leading: const Icon(Icons.lock_outline),
-          title: const Text('Change Password'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.push('/settings/change-password'),
-        ),
-        const Divider(),
-        ListTile(
-          leading: Icon(Icons.logout, color: AppTheme.urgentRed),
-          title: Text('Log Out', style: TextStyle(color: AppTheme.urgentRed)),
-          onTap: () async {
-            await ref.read(currentUserProvider.notifier).signOut();
-          },
         ),
         const SizedBox(height: 32),
 
@@ -71,25 +114,6 @@ class SettingsScreen extends ConsumerWidget {
           child: Text('Shukla PPS v1.0.0', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
         ),
       ],
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          SizedBox(width: 60, child: Text(label, style: TextStyle(color: AppTheme.textSecondary))),
-          Text(value, style: const TextStyle(fontSize: 15)),
-        ],
-      ),
     );
   }
 }

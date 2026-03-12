@@ -257,20 +257,20 @@ Visible when an admin views a submission:
 
 ### Color Palette
 
-> **Note:** Placeholder values — will be updated with exact hex codes from shuklamedical.com
-
-- **Primary:** Blue (buttons, active tabs, FAB, links)
-- **On Primary:** White (text/icons on blue backgrounds)
-- **Background:** White
-- **Surface:** Light gray (#F5F5F5 — cards, input fields)
-- **Text Primary:** Black/near-black
-- **Text Secondary:** Dark gray (timestamps, labels)
-- **Status badges:**
-  - Pending: Gray
-  - In Progress: Blue
-  - Completed: Green
-  - Cancelled: Red
-- **Urgent priority:** Red accent
+- **Primary Blue:** `#1565C0` (buttons, active tabs, FAB, links, icon tints)
+- **Dark Blue:** `#0D47A1` (pressed states)
+- **On Primary:** `#FFFFFF` (text/icons on blue backgrounds)
+- **Background/Surface:** `#F7F8FA` (scaffold, input fills)
+- **Card Color:** `#FFFFFF` (cards on top of surface)
+- **Text Primary:** `#1A1A1A` (body text, headings)
+- **Text Secondary:** `#6B7280` (timestamps, labels, hints)
+- **Divider:** `#E5E7EB` (card borders, separators)
+- **Status colors:**
+  - Pending: `#9E9E9E` (gray)
+  - In Progress: `#1565C0` (blue)
+  - Completed: `#2E7D32` (green)
+  - Cancelled: `#C62828` (red)
+- **Urgent priority:** `#D32F2F` (red)
 
 ### Typography
 
@@ -280,11 +280,16 @@ Visible when an admin views a submission:
 
 ### Visual Style
 
-- Rounded corners on cards and buttons (12-16dp radius)
-- Subtle elevation/shadows on cards
-- Generous padding and touch targets (minimum 48dp)
-- Status badges as colored pills with white text
-- Shukla logo in app bar
+- Material 3 design system
+- Rounded corners on cards and buttons (12dp radius)
+- Cards: white background with subtle 1px border (`#E5E7EB`), no shadows
+- Status badges: soft tinted background (12% opacity of status color) with colored text (not solid pills)
+- Icons in tinted rounded square containers (8% opacity background)
+- Bottom sheet with drag handle
+- Generous padding and touch targets (minimum 48dp, buttons 52dp height)
+- Navigation bar: outlined/filled icon variants for unselected/selected states
+- App bar logo: blue rounded square with white medical icon
+- 430px max width constraint for mobile-first desktop testing
 
 ### Accessibility
 

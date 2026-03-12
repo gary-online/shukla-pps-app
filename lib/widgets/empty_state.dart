@@ -13,15 +13,27 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon ?? Icons.inbox_outlined, size: 64, color: AppTheme.textSecondary),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryBlue.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon ?? Icons.inbox_outlined, size: 32, color: AppTheme.textSecondary),
+            ),
             const SizedBox(height: 16),
-            Text(message, style: const TextStyle(fontSize: 16, color: AppTheme.textSecondary), textAlign: TextAlign.center),
+            Text(
+              message,
+              style: const TextStyle(fontSize: 15, color: AppTheme.textSecondary),
+              textAlign: TextAlign.center,
+            ),
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               ElevatedButton(onPressed: onAction, child: Text(actionLabel!)),
             ],
           ],

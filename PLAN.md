@@ -10,6 +10,34 @@ Shukla Medical currently has an AI phone automation system (`shukla-phone-automa
 
 ---
 
+## Progress Overview
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1 | Project Foundation | COMPLETE |
+| 2 | Authentication | COMPLETE |
+| 3 | Submission Form | COMPLETE |
+| 4 | Dashboard & History | COMPLETE |
+| 5 | Notifications (partial) | IN PROGRESS — UI built, edge functions not deployed, no FCM |
+| 6 | Admin User Management (partial) | IN PROGRESS — screens built, edge function not deployed |
+| 6.5 | UI/UX Polish | NOT STARTED |
+| 7 | Hardening & Compliance | NOT STARTED |
+| 8 | Epicor Integration (future) | NOT STARTED |
+
+### Known Issues Fixed
+- Infinite submission list loop — `SubmissionFilters` needed `==`/`hashCode` for Riverpod `.family`
+- Dashboard spinner — `DateRange` recreated on every build; now stored in state
+- RLS recursive policy — `is_admin()` SECURITY DEFINER function created
+- Various layout issues — Material ancestor missing, infinite width, overflow
+
+### Supabase Setup
+- Project URL: `https://oiyrejablirpqxphgxli.supabase.co`
+- Migration `001_initial_schema.sql` applied manually (4 parts)
+- `is_admin()` SECURITY DEFINER function added to fix recursive RLS
+- Test user: `admin@shukla.test` (admin role)
+
+---
+
 ## Phase 1: Project Foundation
 
 **Goal:** Flutter project scaffolded, Supabase project created, data models defined.
